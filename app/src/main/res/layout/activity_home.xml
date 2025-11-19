@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  tools:context=".ui.home.HomeActivity"
+  >
+
+  <TextView
+    android:id="@+id/title"
+    style="@style/TextAppearance.Material3.BodyLarge"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/balance"
+    app:layout_constraintBottom_toTopOf="@id/balance"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_chainStyle="packed"
+    />
+
+  <TextView
+    android:id="@+id/balance"
+    style="@style/TextAppearance.Material3.HeadlineLarge"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/activity_vertical_margin"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/title"
+    tools:text="@tools:sample/full_names"
+    />
+
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
+    android:id="@+id/transfer"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/activity_vertical_margin"
+    android:contentDescription="@string/bank_transfer"
+    android:src="@drawable/ic_money"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    />
+
+  <!-- ProgressBar pendant le chargement -->
+  <ProgressBar
+      android:id="@+id/pbLoading"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:visibility="gone"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" />
+
+  <!-- Message d'erreur -->
+  <TextView
+      android:id="@+id/tvErrorMessage"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/error_loading_balance"
+      android:textColor="@android:color/holo_red_dark"
+      android:visibility="gone"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent" />
+
+  <!-- Bouton Réessayer -->
+  <Button
+      android:id="@+id/btRetryButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/retry"
+      android:visibility="gone"
+      app:layout_constraintTop_toBottomOf="@id/tvErrorMessage"
+      app:layout_constraintStart_toStartOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      android:layout_marginTop="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
