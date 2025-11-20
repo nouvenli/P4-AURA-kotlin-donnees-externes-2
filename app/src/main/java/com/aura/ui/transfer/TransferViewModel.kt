@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -66,7 +67,7 @@ class TransferViewModel @Inject constructor(
         _transferState.value = UiState.Loading
 
         viewModelScope.launch {
-            // TODO: Retirer ce délai une fois validé par le prof
+            // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
             kotlinx.coroutines.delay(2000)
             try {
                 val amountDouble = _transferData.value.amount.toDoubleOrNull() ?: 0.0
@@ -84,7 +85,18 @@ class TransferViewModel @Inject constructor(
                     _transferState.value =
                         UiState.Error(context.getString(R.string.error_transfer_failed))
                 }
+            } catch (e: HttpException) {
+                // Erreur HTTP spécifique (400, 500, etc.)
+                android.util.Log.e("TransferViewModel", "HTTP error: ${e.code()}", e)
+
+                val errorMessage = when (e.code()) {
+                    500 -> context.getString(R.string.error_invalid_recipient)
+                    else -> context.getString(R.string.error_transfer_failed)
+                }
+
+                _transferState.value = UiState.Error(errorMessage)
             } catch (e: Exception) {
+                // Erreur réseau ou autre
                 android.util.Log.e("TransferViewModel", "Transfer exception", e)
                 _transferState.value = UiState.Error(context.getString(R.string.error_network))
             }

@@ -28,7 +28,7 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // TODO: Ajouter un délai pour voir le loading (à retirer plus tard)
+                // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
                 kotlinx.coroutines.delay(2000)
 
                 val accounts = repository.getAccount(userId)

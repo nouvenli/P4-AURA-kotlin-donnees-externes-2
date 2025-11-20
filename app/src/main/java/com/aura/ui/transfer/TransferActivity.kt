@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
+import com.aura.R
 import com.aura.databinding.ActivityTransferBinding
 import com.aura.ui.common.UiState
 import dagger.hilt.android.AndroidEntryPoint
@@ -58,6 +59,12 @@ class TransferActivity : AppCompatActivity() {
 
                     is UiState.Success -> {
                         binding.loading.visibility = View.GONE
+                        // Afficher le message de succès
+                        Toast.makeText(
+                            this@TransferActivity,
+                            getString(R.string.transfer_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         // Transfert réussi - retour à Home
                         setResult(Activity.RESULT_OK)
                         finish()

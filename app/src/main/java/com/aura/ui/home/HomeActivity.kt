@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.app.Activity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -26,7 +27,10 @@ class HomeActivity : AppCompatActivity() {
 
     private val startTransferActivityForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            //TODO
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Transfert réussi, on recharge le solde
+                viewModel.loadBalance(userId)
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {

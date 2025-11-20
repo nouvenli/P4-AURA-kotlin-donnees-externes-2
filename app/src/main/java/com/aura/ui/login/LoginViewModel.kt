@@ -53,7 +53,7 @@ class LoginViewModel @Inject constructor(
         _loginState.value = UiState.Loading
 
         viewModelScope.launch {
-            // TODO: Retirer ce délai une fois validé par le prof
+            // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
             kotlinx.coroutines.delay(2000)
 
             try {

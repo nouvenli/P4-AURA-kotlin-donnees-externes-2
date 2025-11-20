@@ -1,25 +1,27 @@
 <resources>
-  <string name="app_name">Aura</string>
+    <string name="app_name">Aura</string>
 
-  <string name="prompt_identifier">Identifiant</string>
-  <string name="prompt_password">Mot de passe</string>
-  <string name="action_sign_in">Connexion</string>
+    <string name="prompt_identifier">Identifiant</string>
+    <string name="prompt_password">Mot de passe</string>
+    <string name="action_sign_in">Connexion</string>
 
-  <string name="balance">Balance :</string>
-  <string name="disconnect">Déconnexion</string>
-  <string name="bank_transfer">Faire un virement</string>
+    <string name="balance">Balance :</string>
+    <string name="disconnect">Déconnexion</string>
+    <string name="bank_transfer">Faire un virement</string>
 
-  <string name="prompt_recipient">Destinataire</string>
-  <string name="prompt_amount">Montant</string>
-  <string name="action_transfer">Faire le virement</string>
+    <string name="prompt_recipient">Destinataire</string>
+    <string name="prompt_amount">Montant</string>
+    <string name="action_transfer">Faire le virement</string>
 
-  <string name="error_loading_balance">Erreur lors du chargement du solde</string>
-  <string name="retry">Réessayer</string>
+    <string name="error_loading_balance">Erreur lors du chargement du solde</string>
+    <string name="retry">Réessayer</string>
 
-  <string name="error_network">Impossible de contacter le serveur</string>
-  <string name="error_invalid_credentials">Identifiants incorrects</string>
-  <string name="error_insufficient_funds">Solde insuffisant</string>
-  <string name="error_generic">Une erreur est survenue</string>
-  <string name="error_transfer_failed">Le transfert a échoué. Vérifiez le destinataire</string>
+    <string name="error_network">Impossible de contacter le serveur</string>
+    <string name="error_invalid_credentials">Identifiants incorrects</string>
+    <string name="error_insufficient_funds">Solde insuffisant</string>
+    <string name="error_generic">Une erreur est survenue</string>
+    <string name="error_transfer_failed">Le transfert a échoué. Vérifiez le destinataire</string>
+    <string name="error_invalid_recipient">Le destinataire est invalide</string>
+    <string name="transfer_success">Transfert effectué avec succès</string>
 
 </resources>

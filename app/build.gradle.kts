@@ -48,6 +48,8 @@ dependencies {
     implementation("com.google.android.material:material:1.8.0")
     implementation("androidx.annotation:annotation:1.6.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // dagger and ksp
     implementation("com.google.dagger:hilt-android:2.48")
     ksp("com.google.dagger:hilt-android-compiler:2.48")
 
