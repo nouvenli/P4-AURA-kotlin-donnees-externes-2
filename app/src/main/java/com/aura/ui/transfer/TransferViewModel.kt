@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.R
-import com.aura.data.repository.AuraRepository
+import com.aura.data.repository.AuraRepositoryImpl
 import com.aura.ui.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TransferViewModel @Inject constructor(
-    private val repository: AuraRepository,
+    private val repository: AuraRepositoryImpl,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 

@@ -1,6 +1,6 @@
 package com.aura.data.model
 
-data class Credentials(
+data class CredentialsDto(
     val id: String,
     val password: String
 )

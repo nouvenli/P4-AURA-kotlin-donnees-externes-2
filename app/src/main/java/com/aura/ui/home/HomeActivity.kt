@@ -66,49 +66,37 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun updateUI(state: UiState<HomeData>) {
-        when (state) {
-            is UiState.Idle -> {
-                // État initial - afficher un écran vide ou loading
-                binding.pbLoading.visibility = View.VISIBLE
-                binding.title.visibility = View.GONE
-                binding.balance.visibility = View.GONE
-                binding.transfer.visibility = View.GONE
-                binding.tvErrorMessage.visibility = View.GONE
-                binding.btRetryButton.visibility = View.GONE
-            }
+        // D'abord tout cacher
+        hideAllViews()
 
-            is UiState.Loading -> {
-                // Mode chargement
+        // Puis afficher uniquement ce qui est nécessaire selon l'état
+        when (state) {
+            is UiState.Idle, is UiState.Loading -> {
                 binding.pbLoading.visibility = View.VISIBLE
-                binding.title.visibility = View.GONE
-                binding.balance.visibility = View.GONE
-                binding.transfer.visibility = View.GONE
-                binding.tvErrorMessage.visibility = View.GONE
-                binding.btRetryButton.visibility = View.GONE
             }
 
             is UiState.Error -> {
-                // Mode erreur
-                binding.pbLoading.visibility = View.GONE
-                binding.title.visibility = View.GONE
-                binding.balance.visibility = View.GONE
-                binding.transfer.visibility = View.GONE
                 binding.tvErrorMessage.visibility = View.VISIBLE
                 binding.tvErrorMessage.text = state.message
                 binding.btRetryButton.visibility = View.VISIBLE
             }
 
             is UiState.Success -> {
-                // Mode succès
-                binding.pbLoading.visibility = View.GONE
                 binding.title.visibility = View.VISIBLE
                 binding.balance.visibility = View.VISIBLE
                 binding.balance.text = state.data.balanceFormatted
                 binding.transfer.visibility = View.VISIBLE
-                binding.tvErrorMessage.visibility = View.GONE
-                binding.btRetryButton.visibility = View.GONE
             }
         }
+    }
+
+    private fun hideAllViews() {
+        binding.pbLoading.visibility = View.GONE
+        binding.title.visibility = View.GONE
+        binding.balance.visibility = View.GONE
+        binding.transfer.visibility = View.GONE
+        binding.tvErrorMessage.visibility = View.GONE
+        binding.btRetryButton.visibility = View.GONE
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

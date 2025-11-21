@@ -1,6 +1,6 @@
 package com.aura.data.model
 
-data class Account(
+data class AccountDto(
     val id: String,
     val main: Boolean,
     val balance: Double

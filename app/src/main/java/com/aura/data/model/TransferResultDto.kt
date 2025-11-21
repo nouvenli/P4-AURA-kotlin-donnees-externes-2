@@ -1,5 +1,5 @@
 package com.aura.data.model
 
-data class TransferResult(
+data class TransferResultDto(
     val result: Boolean
 )

@@ -1,5 +1,5 @@
 package com.aura.data.model
 
-data class CredentialsResult(
+data class CredentialsResultDto(
     val granted: Boolean
 )
