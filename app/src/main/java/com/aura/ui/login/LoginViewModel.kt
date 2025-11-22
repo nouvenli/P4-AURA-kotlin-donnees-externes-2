@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.R
-import com.aura.data.repository.AuraRepositoryImpl
+import com.aura.domain.model.UserCredentials
+import com.aura.domain.usecase.LoginUseCase
 import com.aura.ui.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -17,9 +18,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuraRepositoryImpl,
+    private val loginUseCase: LoginUseCase,  // ← Use Case au lieu du Repository
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
 
     private val _loginData = MutableStateFlow(LoginData())
     val loginData: StateFlow<LoginData> = _loginData.asStateFlow()
@@ -51,16 +53,18 @@ class LoginViewModel @Inject constructor(
 
     fun connect() {
         _loginState.value = UiState.Loading
-
         viewModelScope.launch {
             // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
             kotlinx.coroutines.delay(2000)
-
             try {
-                val success = repository.login(
-                    _loginData.value.identifier,
-                    _loginData.value.password
+                // Créer l'objet Domain
+                val credentials = UserCredentials(
+                    userId = _loginData.value.identifier,
+                    password = _loginData.value.password
                 )
+
+                // Appeler le Use Case
+                val success = loginUseCase(credentials)
 
                 if (success) {
                     _loginState.value = UiState.Success(Unit)

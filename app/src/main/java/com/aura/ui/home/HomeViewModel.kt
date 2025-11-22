@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.R
-import com.aura.data.repository.AuraRepositoryImpl
+import com.aura.domain.usecase.GetAccountUseCase
 import com.aura.ui.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: AuraRepositoryImpl,
+    private val getAccountUseCase: GetAccountUseCase,  // ← Use Case au lieu du Repository
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -25,26 +25,28 @@ class HomeViewModel @Inject constructor(
 
     fun loadBalance(userId: String) {
         _uiState.value = UiState.Loading
-
         viewModelScope.launch {
             try {
                 // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
                 kotlinx.coroutines.delay(2000)
 
-                val accounts = repository.getAccount(userId)
+                // Appeler le Use Case (retourne directement List<UserAccount>)
+                val accounts = getAccountUseCase(userId)
 
                 if (accounts.isEmpty()) {
                     _uiState.value = UiState.Error(context.getString(R.string.error_network))
                     return@launch
                 }
 
-                val mainAccount = accounts.firstOrNull { it.main }
+                // Trouver le compte principal
+                val mainAccount = accounts.firstOrNull { it.isMainAccount }
 
                 if (mainAccount == null) {
                     _uiState.value = UiState.Error(context.getString(R.string.error_generic))
                     return@launch
                 }
 
+                // Formater le solde
                 val balanceText = String.format("%.2f€", mainAccount.balance)
                 _uiState.value = UiState.Success(HomeData(balanceFormatted = balanceText))
 

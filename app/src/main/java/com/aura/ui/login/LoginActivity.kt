@@ -17,22 +17,10 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityLoginBinding
-    private val viewModel: LoginViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        configObservers()
-        configListeners()
-    }
-
     private fun configObservers() {
         // Observer les données du formulaire
         lifecycleScope.launch {
+
             viewModel.loginData.collect { data ->
                 binding.login.isEnabled = data.isButtonEnabled
             }
@@ -42,14 +30,17 @@ class LoginActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.loginState.collect { state ->
                 when (state) {
+
                     is UiState.Idle -> {
                         // État initial - ne rien faire
                         binding.loading.visibility = View.GONE
                     }
+
                     is UiState.Loading -> {
                         binding.loading.visibility = View.VISIBLE
                         binding.login.isEnabled = false
                     }
+
                     is UiState.Success -> {
                         binding.loading.visibility = View.GONE
                         // Connexion réussie
@@ -58,6 +49,7 @@ class LoginActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     }
+
                     is UiState.Error -> {
                         binding.loading.visibility = View.GONE
                         Toast.makeText(
@@ -66,9 +58,27 @@ class LoginActivity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                     }
+
                 }
             }
         }
+    }
+
+    private lateinit var binding: ActivityLoginBinding
+
+    private val viewModel: LoginViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+
+        configObservers()
+        configListeners()
+
     }
 
     private fun configListeners() {

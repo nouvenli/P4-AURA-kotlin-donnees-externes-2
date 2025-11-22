@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.R
-import com.aura.data.repository.AuraRepositoryImpl
+import com.aura.domain.model.MoneyTransfer
+import com.aura.domain.usecase.TransferMoneyUseCase
 import com.aura.ui.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TransferViewModel @Inject constructor(
-    private val repository: AuraRepositoryImpl,
+    private val transferMoneyUseCase: TransferMoneyUseCase,  // ← Use Case au lieu du Repository
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -72,12 +73,15 @@ class TransferViewModel @Inject constructor(
             try {
                 val amountDouble = _transferData.value.amount.toDoubleOrNull() ?: 0.0
 
-                val success = repository.transfer(
-                    sender = senderId,
-                    recipient = _transferData.value.recipient,
+                // Créer l'objet Domain
+                val moneyTransfer = MoneyTransfer(
+                    senderId = senderId,
+                    recipientId = _transferData.value.recipient,
                     amount = amountDouble
                 )
-                android.util.Log.d("TransferViewModel", "Transfer result: $success")
+
+                // Appeler le Use Case
+                val success = transferMoneyUseCase(moneyTransfer)
 
                 if (success) {
                     _transferState.value = UiState.Success(Unit)
@@ -87,7 +91,6 @@ class TransferViewModel @Inject constructor(
                 }
             } catch (e: HttpException) {
                 // Erreur HTTP spécifique (400, 500, etc.)
-                android.util.Log.e("TransferViewModel", "HTTP error: ${e.code()}", e)
 
                 val errorMessage = when (e.code()) {
                     500 -> context.getString(R.string.error_invalid_recipient)
@@ -97,7 +100,6 @@ class TransferViewModel @Inject constructor(
                 _transferState.value = UiState.Error(errorMessage)
             } catch (e: Exception) {
                 // Erreur réseau ou autre
-                android.util.Log.e("TransferViewModel", "Transfer exception", e)
                 _transferState.value = UiState.Error(context.getString(R.string.error_network))
             }
         }
