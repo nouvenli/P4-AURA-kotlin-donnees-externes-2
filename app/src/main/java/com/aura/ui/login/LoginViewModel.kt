@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase,  // ← Use Case au lieu du Repository
+    private val loginUseCase: LoginUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
