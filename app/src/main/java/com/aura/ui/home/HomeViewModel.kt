@@ -9,7 +9,6 @@ import com.aura.domain.usecase.GetAccountUseCase
 import com.aura.ui.model.UiStateWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +27,7 @@ class HomeViewModel @Inject constructor(
     /**
      * --- ui form state & state (loading, success, error) ---
      */
-    //private val _uiState = MutableStateFlow<UiStateWrapper<HomeFormState>>(UiStateWrapper.Loading)
+
     private val _uiState = MutableStateFlow<UiStateWrapper<HomeFormState>>(UiStateWrapper.Idle)
     val uiState: StateFlow<UiStateWrapper<HomeFormState>> = _uiState.asStateFlow()
 
