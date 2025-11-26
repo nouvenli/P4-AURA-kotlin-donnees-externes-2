@@ -25,7 +25,7 @@ class AccountMapperTest {
     }
 
     @Test
-    fun `toDomain Should convert list of accountDto to list of UserAccount`() {
+    fun `toDomain Should convert empty list AccountDto to empty list`() {
         //GIVEN - Empty list of AccountDto
         val accountDtoList = emptyList<AccountDto>()
 

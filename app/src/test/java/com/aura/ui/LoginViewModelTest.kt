@@ -3,9 +3,8 @@ package com.aura.ui.login
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.aura.R
-import com.aura.domain.model.UserCredentials
 import com.aura.domain.usecase.LoginUseCase
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -67,7 +66,7 @@ class LoginViewModelTest {
         viewModel.onPasswordChange("password")
 
         //When
-        val loginData = viewModel.loginData.value
+        val loginData = viewModel.loginFormState.value
 
         //Then
         assertFalse(loginData.isButtonEnabled)
@@ -79,7 +78,7 @@ class LoginViewModelTest {
         viewModel.onPasswordChange("")
 
         // WHEN
-        val loginData = viewModel.loginData.value
+        val loginData = viewModel.loginFormState.value
 
         // THEN
         assertFalse(loginData.isButtonEnabled)
@@ -96,7 +95,7 @@ class LoginViewModelTest {
         viewModel.onPasswordChange("p@sswOrd")
 
     //When
-        val loginData = viewModel.loginData.value
+        val loginData = viewModel.loginFormState.value
 
     //Then
         assertTrue(loginData.isButtonEnabled)
@@ -119,7 +118,7 @@ class LoginViewModelTest {
 
         //THEN
         val loginState = viewModel.loginState.value
-        assertTrue(loginState is UiState.Success)
+        assertTrue(loginState is UiStateWrapper.Success)
     }
 
     @Test
@@ -135,8 +134,8 @@ class LoginViewModelTest {
 
         //THEN
         val loginState = viewModel.loginState.value
-        assertTrue(loginState is UiState.Error)
-        assertEquals("Identifiants invalides", (loginState as UiState.Error).message)
+        assertTrue(loginState is UiStateWrapper.Error)
+        assertEquals("Identifiants invalides", (loginState as UiStateWrapper.Error).message)
     }
 
 

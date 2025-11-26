@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aura.R
 import com.aura.domain.model.MoneyTransfer
 import com.aura.domain.usecase.TransferMoneyUseCase
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,26 +17,42 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
 
+/**
+ * --- Dependencies ---
+ */
+
 @HiltViewModel
 class TransferViewModel @Inject constructor(
     private val transferMoneyUseCase: TransferMoneyUseCase,  // ← Use Case au lieu du Repository
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _transferData = MutableStateFlow(TransferData())
-    val transferData: StateFlow<TransferData> = _transferData.asStateFlow()
+    /**
+     * --- ui form state & state (loading, success, error) ---
+     */
 
-    private val _transferState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
-    val transferState: StateFlow<UiState<Unit>> = _transferState.asStateFlow()
+    private val _transferFormState = MutableStateFlow(TransferFormState())
+    val transferFormState: StateFlow<TransferFormState> = _transferFormState.asStateFlow()
+
+
+    private val _transferState = MutableStateFlow<UiStateWrapper<Unit>>(UiStateWrapper.Idle)
+    val transferState: StateFlow<UiStateWrapper<Unit>> = _transferState.asStateFlow()
 
     private var senderId: String = ""
+
+    /**
+     * --- Initialization ---
+     */
 
     fun setSenderId(id: String) {
         senderId = id
     }
 
+    /**
+     * --- Form updates ---
+     */
     fun onRecipientChange(newRecipient: String) {
-        _transferData.update { currentState ->
+        _transferFormState.update { currentState ->
             currentState.copy(
                 recipient = newRecipient,
                 isButtonEnabled = isFormValid(newRecipient, currentState.amount)
@@ -45,7 +61,7 @@ class TransferViewModel @Inject constructor(
     }
 
     fun onAmountChange(newAmount: String) {
-        _transferData.update { currentState ->
+        _transferFormState.update { currentState ->
             currentState.copy(
                 amount = newAmount,
                 isButtonEnabled = isFormValid(currentState.recipient, newAmount)
@@ -54,54 +70,64 @@ class TransferViewModel @Inject constructor(
     }
 
     private fun isFormValid(recipient: String, amount: String): Boolean {
-        // Vérifie que les champs ne sont pas vides et que le montant est valide
+
         if (recipient.isBlank() || amount.isBlank()) return false
-
-        // Vérifie que le montant est un nombre valide
         val amountDouble = amount.toDoubleOrNull() ?: return false
-
-        // Vérifie que le montant est positif
         return amountDouble > 0
     }
 
+    /**
+     * --- Business Actions ---
+     */
+
     fun transfer() {
-        _transferState.value = UiState.Loading
+
+        showLoading()
 
         viewModelScope.launch {
-            // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
-            kotlinx.coroutines.delay(2000)
             try {
-                val amountDouble = _transferData.value.amount.toDoubleOrNull() ?: 0.0
-
-                // Créer l'objet Domain
-                val moneyTransfer = MoneyTransfer(
-                    senderId = senderId,
-                    recipientId = _transferData.value.recipient,
-                    amount = amountDouble
-                )
-
-                // Appeler le Use Case
-                val success = transferMoneyUseCase(moneyTransfer)
+                val transfer = buildTransfer()
+                val success = transferMoneyUseCase(transfer)
 
                 if (success) {
-                    _transferState.value = UiState.Success(Unit)
+                    showSuccess()
                 } else {
-                    _transferState.value =
-                        UiState.Error(context.getString(R.string.error_transfer_failed))
+                    showError(R.string.error_transfer_failed)
                 }
-            } catch (e: HttpException) {
-                // Erreur HTTP spécifique (400, 500, etc.)
-
-                val errorMessage = when (e.code()) {
-                    500 -> context.getString(R.string.error_invalid_recipient)
-                    else -> context.getString(R.string.error_transfer_failed)
+            } catch (ex: HttpException) {
+                val errorMsg = when (ex.code()) {
+                    500 -> R.string.error_invalid_recipient
+                    else -> R.string.error_transfer_failed
                 }
+                showError(errorMsg)
 
-                _transferState.value = UiState.Error(errorMessage)
             } catch (e: Exception) {
-                // Erreur réseau ou autre
-                _transferState.value = UiState.Error(context.getString(R.string.error_network))
+                showError(R.string.error_network)
             }
         }
     }
+
+    private fun buildTransfer(): MoneyTransfer {
+        return MoneyTransfer(
+            senderId = senderId,
+            recipientId = _transferFormState.value.recipient.trim(),
+            amount = _transferFormState.value.amount.toDouble()
+        )
+    }
+
+    /**
+     * --- helpers ---
+     */
+        private fun showLoading() {
+            _transferState.value = UiStateWrapper.Loading
+        }
+
+        private fun showSuccess() {
+            _transferState.value = UiStateWrapper.Success(Unit)
+        }
+
+        private fun showError(resId: Int) {
+            _transferState.value = UiStateWrapper.Error(context.getString(resId))
+        }
+
 }

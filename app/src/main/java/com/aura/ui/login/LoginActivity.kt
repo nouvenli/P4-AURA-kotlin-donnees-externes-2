@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.aura.databinding.ActivityLoginBinding
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import com.aura.ui.home.HomeActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -17,81 +17,98 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
 
-    private fun configObservers() {
-        // Observer les données du formulaire
-        lifecycleScope.launch {
+    /**
+     *     --- view binding and view model ---
+      */
 
-            viewModel.loginData.collect { data ->
-                binding.login.isEnabled = data.isButtonEnabled
+    private lateinit var binding: ActivityLoginBinding
+    private val viewModel: LoginViewModel by viewModels()
+
+    /**
+     * --- lifecycle ---
+     * */
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setupObservers()
+        setupListeners()
+
+    }
+
+    /**
+     * --- ui observers ---
+     */
+
+    private fun setupObservers() {
+
+        // Form state
+        lifecycleScope.launch {
+            viewModel.loginFormState.collect { stateData ->
+                binding.login.isEnabled = stateData.isButtonEnabled
             }
         }
 
-        // Observer l'état de connexion
+        // Login state (loading, success, error)
         lifecycleScope.launch {
             viewModel.loginState.collect { state ->
+
+                updateUI(state)
+
                 when (state) {
-
-                    is UiState.Idle -> {
-                        // État initial - ne rien faire
-                        binding.loading.visibility = View.GONE
-                    }
-
-                    is UiState.Loading -> {
-                        binding.loading.visibility = View.VISIBLE
-                        binding.login.isEnabled = false
-                    }
-
-                    is UiState.Success -> {
-                        binding.loading.visibility = View.GONE
-                        // Connexion réussie
-                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                        intent.putExtra("USER_ID", viewModel.getUserId())
-                        startActivity(intent)
-                        finish()
-                    }
-
-                    is UiState.Error -> {
-                        binding.loading.visibility = View.GONE
-                        Toast.makeText(
-                            this@LoginActivity,
-                            state.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
+                    is UiStateWrapper.Success -> navigateToHome()
+                    is UiStateWrapper.Error -> showError(state.message)
+                    else -> Unit
                 }
             }
         }
     }
 
-    private lateinit var binding: ActivityLoginBinding
+    /**
+     * --- ui listeners ---
+      */
 
-    private val viewModel: LoginViewModel by viewModels()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-        configObservers()
-        configListeners()
-
+    private fun setupListeners() {
+        binding.identifier.addTextChangedListener { viewModel.onIdentifierChange(it.toString())}
+        binding.password.addTextChangedListener { viewModel.onPasswordChange(it.toString())}
+        binding.login.setOnClickListener { viewModel.connect() }
     }
 
-    private fun configListeners() {
-        binding.identifier.addTextChangedListener {
-            viewModel.onIdentifierChange(it.toString())
-        }
+    /**
+     * --- ui functions ---
+     */
 
-        binding.password.addTextChangedListener {
-            viewModel.onPasswordChange(it.toString())
-        }
+    private fun updateUI(state: UiStateWrapper<Unit>) {
+        binding.loading.show(state is UiStateWrapper.Loading)
+    }
 
-        binding.login.setOnClickListener {
-            viewModel.connect()
-        }
+    /**
+     * --- navigation ---
+      */
+
+    private fun navigateToHome() {
+        val userId = viewModel.loginFormState.value.identifier
+        val intent = Intent(this, HomeActivity::class.java)
+        intent.putExtra("USER_ID", userId)
+        startActivity(intent)
+        finish()
+    }
+
+    /**
+     * --- error handling ---
+     */
+    private fun showError(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 }
+/**
+ * --- extensions ---
+ */
+
+private fun View.show(show: Boolean) {
+    visibility = if (show) View.VISIBLE else View.GONE
+}
+

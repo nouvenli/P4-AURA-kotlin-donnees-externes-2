@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.app.Activity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -13,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.aura.R
 import com.aura.databinding.ActivityHomeBinding
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import com.aura.ui.transfer.TransferActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -21,17 +20,16 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class HomeActivity : AppCompatActivity() {
 
+    /**
+     *     --- view binding and view model ---
+     */
+
     private lateinit var binding: ActivityHomeBinding
     private val viewModel: HomeViewModel by viewModels()
-    private var userId: String = ""
 
-    private val startTransferActivityForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                // Transfert réussi, on recharge le solde
-                viewModel.loadBalance(userId)
-            }
-        }
+    /**
+     * --- lifecycle ---
+     */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,66 +37,73 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Récupérer l'ID utilisateur
-        userId = intent.getStringExtra("USER_ID") ?: ""
+        val userId = intent.getStringExtra("USER_ID") ?: ""
+        viewModel.setUserId(userId)
 
-        // Observer l'état du ViewModel
+        setupObservers()
+        setupListeners()
+    }
+
+    /**
+     * --- ui observers ---
+     */
+
+    private fun setupObservers() {
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 updateUI(state)
             }
         }
+    }
 
-        // Charger le solde
-        viewModel.loadBalance(userId)
+    /**
+     * --- ui listeners ---
+     */
 
-        // Bouton de transfert
+    private fun setupListeners() {
         binding.transfer.setOnClickListener {
             val intent = Intent(this@HomeActivity, TransferActivity::class.java)
-            intent.putExtra("USER_ID", userId)
+            intent.putExtra("USER_ID", viewModel.currentUserId)
             startTransferActivityForResult.launch(intent)
         }
 
-        // Bouton Réessayer
         binding.btRetryButton.setOnClickListener {
-            viewModel.loadBalance(userId)
+            viewModel.loadBalance()
         }
     }
 
-    private fun updateUI(state: UiState<HomeData>) {
-        // D'abord tout cacher
-        hideAllViews()
-
-        // Puis afficher uniquement ce qui est nécessaire selon l'état
-        when (state) {
-            is UiState.Idle, is UiState.Loading -> {
-                binding.pbLoading.visibility = View.VISIBLE
+    private val startTransferActivityForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                viewModel.loadBalance()
             }
+        }
 
-            is UiState.Error -> {
-                binding.tvErrorMessage.visibility = View.VISIBLE
-                binding.tvErrorMessage.text = state.message
-                binding.btRetryButton.visibility = View.VISIBLE
-            }
 
-            is UiState.Success -> {
-                binding.title.visibility = View.VISIBLE
-                binding.balance.visibility = View.VISIBLE
-                binding.balance.text = state.data.balanceFormatted
-                binding.transfer.visibility = View.VISIBLE
-            }
+    /**
+     * --- ui functions ---
+     */
+
+    private fun updateUI(state: UiStateWrapper<HomeFormState>) {
+
+        binding.pbLoading.show(state is UiStateWrapper.Loading || state is UiStateWrapper.Idle)
+        binding.tvErrorMessage.show(state is UiStateWrapper.Error)
+        binding.btRetryButton.show(state is UiStateWrapper.Error)
+        binding.title.show(state is UiStateWrapper.Success)
+        binding.balance.show(state is UiStateWrapper.Success)
+        binding.transfer.show(state is UiStateWrapper.Success)
+
+        if (state is UiStateWrapper.Success) {
+            binding.balance.text = state.data.balanceFormatted
+        }
+        if (state is UiStateWrapper.Error) {
+            binding.tvErrorMessage.text = state.message
         }
     }
 
-    private fun hideAllViews() {
-        binding.pbLoading.visibility = View.GONE
-        binding.title.visibility = View.GONE
-        binding.balance.visibility = View.GONE
-        binding.transfer.visibility = View.GONE
-        binding.tvErrorMessage.visibility = View.GONE
-        binding.btRetryButton.visibility = View.GONE
-    }
-
+    /**
+     * --- system callbacks  ---
+     */
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.home_menu, menu)
         return true
@@ -110,8 +115,14 @@ class HomeActivity : AppCompatActivity() {
                 finish()
                 true
             }
-
             else -> super.onOptionsItemSelected(item)
         }
     }
+}
+/**
+ * --- extensions ---
+ */
+
+private fun View.show(show: Boolean) {
+    this.visibility = if (show) View.VISIBLE else View.GONE
 }

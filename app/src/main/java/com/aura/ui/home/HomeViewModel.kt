@@ -4,55 +4,103 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.R
+import com.aura.domain.model.UserAccount
 import com.aura.domain.usecase.GetAccountUseCase
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * --- Dependencies ---
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getAccountUseCase: GetAccountUseCase,  // ← Use Case au lieu du Repository
+    private val getAccountUseCase: GetAccountUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState<HomeData>>(UiState.Loading)
-    val uiState: StateFlow<UiState<HomeData>> = _uiState.asStateFlow()
+    /**
+     * --- ui form state & state (loading, success, error) ---
+     */
+    //private val _uiState = MutableStateFlow<UiStateWrapper<HomeFormState>>(UiStateWrapper.Loading)
+    private val _uiState = MutableStateFlow<UiStateWrapper<HomeFormState>>(UiStateWrapper.Idle)
+    val uiState: StateFlow<UiStateWrapper<HomeFormState>> = _uiState.asStateFlow()
 
-    fun loadBalance(userId: String) {
-        _uiState.value = UiState.Loading
+    private var userId: String = ""
+
+    /**
+     * --- Initialization ---
+     */
+
+    fun setUserId(id: String) {
+        userId = id
+        loadBalance()
+    }
+
+    val currentUserId: String
+        get() = userId
+
+    /**
+     * --- Business Actions ---
+     */
+    fun loadBalance() {
+        if (userId.isBlank()) {
+            showError(R.string.error_generic)
+            return
+        }
+
+        showLoading()
+
         viewModelScope.launch {
             try {
-                // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
-                kotlinx.coroutines.delay(2000)
-
-                // Appeler le Use Case (retourne directement List<UserAccount>)
-                val accounts = getAccountUseCase(userId)
-
-                if (accounts.isEmpty()) {
-                    _uiState.value = UiState.Error(context.getString(R.string.error_network))
-                    return@launch
-                }
-
-                // Trouver le compte principal
-                val mainAccount = accounts.firstOrNull { it.isMainAccount }
-
-                if (mainAccount == null) {
-                    _uiState.value = UiState.Error(context.getString(R.string.error_generic))
-                    return@launch
-                }
-
-                // Formater le solde
-                val balanceText = String.format("%.2f€", mainAccount.balance)
-                _uiState.value = UiState.Success(HomeData(balanceFormatted = balanceText))
-
+                val account = fetchMainAccount(userId)
+                val formattedBalance = formatBalance(account.balance)
+                showSuccess(HomeFormState(balanceFormatted = formattedBalance))
             } catch (e: Exception) {
-                _uiState.value = UiState.Error(context.getString(R.string.error_network))
+                showError(R.string.error_network)
+
             }
         }
+    }
+
+
+    private suspend fun fetchMainAccount(userId: String): UserAccount {
+        // TODO Petite pause pour simuler un chargement (à retirer en prod)
+        delay(2000)
+
+        val accounts = getAccountUseCase(userId)
+
+        if (accounts.isEmpty())
+            throw Exception("EMPTY_ACCOUNTS")
+
+        return accounts.firstOrNull { it.isMainAccount }
+            ?: throw Exception("NO_MAIN_ACCOUNT")
+    }
+
+    /**
+     * --- helpers ---
+     */
+
+
+    private fun showLoading() {
+        _uiState.value = UiStateWrapper.Loading
+    }
+
+    private fun showSuccess(data: HomeFormState) {
+        _uiState.value = UiStateWrapper.Success(data)
+    }
+
+    private fun showError(messageResId: Int) {
+        _uiState.value = UiStateWrapper.Error(context.getString(messageResId))
+    }
+
+    private fun formatBalance(balance: Double): String {
+        return String.format("%.2f €", balance)
     }
 }

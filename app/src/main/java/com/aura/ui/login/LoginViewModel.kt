@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.aura.R
 import com.aura.domain.model.UserCredentials
 import com.aura.domain.usecase.LoginUseCase
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,21 +16,32 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * --- Dependencies ---
+ */
+
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    /**
+     * --- ui form state & state (loading, success, error) ---
+     */
 
-    private val _loginData = MutableStateFlow(LoginData())
-    val loginData: StateFlow<LoginData> = _loginData.asStateFlow()
+    private val _loginFormState = MutableStateFlow(LoginFormState())
+    val loginFormState: StateFlow<LoginFormState> = _loginFormState.asStateFlow()
 
-    private val _loginState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
-    val loginState: StateFlow<UiState<Unit>> = _loginState.asStateFlow()
+    private val _loginState = MutableStateFlow<UiStateWrapper<Unit>>(UiStateWrapper.Idle)
+    val loginState: StateFlow<UiStateWrapper<Unit>> = _loginState.asStateFlow()
+
+    /**
+     * --- Form updates ---
+     */
 
     fun onIdentifierChange(newIdentifier: String) {
-        _loginData.update { currentState ->
+        _loginFormState.update { currentState ->
             currentState.copy(
                 identifier = newIdentifier,
                 isButtonEnabled = isFormValid(newIdentifier, currentState.password)
@@ -39,7 +50,7 @@ class LoginViewModel @Inject constructor(
     }
 
     fun onPasswordChange(newPassword: String) {
-        _loginData.update { currentState ->
+        _loginFormState.update { currentState ->
             currentState.copy(
                 password = newPassword,
                 isButtonEnabled = isFormValid(currentState.identifier, newPassword)
@@ -47,35 +58,50 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun isFormValid(identifier: String, password: String): Boolean {
-        return identifier.isNotBlank() && password.isNotBlank()
+    private fun isFormValid(id: String, pwd: String): Boolean {
+        return id.isNotBlank() && pwd.isNotBlank()
     }
 
-    fun connect() {
-        _loginState.value = UiState.Loading
-        viewModelScope.launch {
-            // TODO: RETIRER EN PRODUCTION - Délai de test pour le ProgressBar
-            kotlinx.coroutines.delay(2000)
-            try {
-                // Créer l'objet Domain
-                val credentials = UserCredentials(
-                    userId = _loginData.value.identifier,
-                    password = _loginData.value.password
-                )
+    /**
+     * --- Business Actions ---
+     */
 
-                // Appeler le Use Case
+    fun connect() {
+
+        showLoading()
+
+        viewModelScope.launch {
+            try {
+                val credentials = buildCredentials()
                 val success = loginUseCase(credentials)
 
-                if (success) {
-                    _loginState.value = UiState.Success(Unit)
-                } else {
-                    _loginState.value = UiState.Error(context.getString(R.string.error_invalid_credentials))
-                }
+                if (success) showSuccess() else showError(R.string.error_invalid_credentials)
             } catch (e: Exception) {
-                _loginState.value = UiState.Error(context.getString(R.string.error_network))
+                showError(R.string.error_network)
             }
         }
     }
 
-    fun getUserId(): String = _loginData.value.identifier
+    private fun buildCredentials(): UserCredentials {
+        return UserCredentials(
+            userId = loginFormState.value.identifier,
+            password = loginFormState.value.password
+        )
+    }
+
+    /**
+     *     --- helpers ---
+     */
+
+    private fun showLoading() {
+        _loginState.value = UiStateWrapper.Loading
+    }
+
+    private fun showSuccess() {
+        _loginState.value = UiStateWrapper.Success(Unit)
+    }
+
+    private fun showError(msgRes: Int) {
+        _loginState.value = UiStateWrapper.Error(context.getString(msgRes))
+    }
 }
