@@ -10,15 +10,24 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import com.aura.R
 import com.aura.databinding.ActivityTransferBinding
-import com.aura.ui.common.UiState
+import com.aura.ui.model.UiStateWrapper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TransferActivity : AppCompatActivity() {
 
+
+    /**
+     *    --- view binding and view model ---
+     *    */
+
     private lateinit var binding: ActivityTransferBinding
     private val viewModel: TransferViewModel by viewModels()
+
+    /**
+     *    --- lifecycle ---
+     */
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,66 +35,66 @@ class TransferActivity : AppCompatActivity() {
         binding = ActivityTransferBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Récupérer l'ID de l'expéditeur
         val senderId = intent.getStringExtra("USER_ID") ?: ""
         viewModel.setSenderId(senderId)
 
-        configObservers()
-        configListeners()
+        setupObservers()
+        setupListeners()
     }
 
-    private fun configObservers() {
-        // Observer les données du formulaire
+    /**
+     *    --- ui observers ---
+     */
+
+    private fun setupObservers() {
+
+        // Form state
         lifecycleScope.launch {
-            viewModel.transferData.collect { data ->
-                // vérifier si le transfert est en cours (pour reactiver le bouton) et mettre à jour l'état du bouton
-                val isLoading = viewModel.transferState.value is UiState.Loading
-                binding.transfer.isEnabled = data.isButtonEnabled && !isLoading
+            viewModel.transferFormState.collect { state ->
+                val isLoading = viewModel.transferState.value is UiStateWrapper.Loading
+                binding.transfer.isEnabled = state.isButtonEnabled && !isLoading
             }
         }
 
-        // Observer l'état du transfert
+        // Transfer state (loading, success, error)
         lifecycleScope.launch {
             viewModel.transferState.collect { state ->
+                updateUI(state)
+
                 when (state) {
-                    is UiState.Idle -> {
-                        binding.loading.visibility = View.GONE
-                    }
 
-                    is UiState.Loading -> {
-                        binding.loading.visibility = View.VISIBLE
-                        binding.transfer.isEnabled = false
-                    }
-
-                    is UiState.Success -> {
-                        binding.loading.visibility = View.GONE
-                        // Afficher le message de succès
+                    is UiStateWrapper.Success -> {
                         Toast.makeText(
                             this@TransferActivity,
                             getString(R.string.transfer_success),
                             Toast.LENGTH_SHORT
                         ).show()
-                        // Transfert réussi - retour à Home
+
                         setResult(Activity.RESULT_OK)
                         finish()
                     }
 
-                    is UiState.Error -> {
-                        binding.loading.visibility = View.GONE
+                    is UiStateWrapper.Error -> {
                         Toast.makeText(
                             this@TransferActivity,
                             state.message,
                             Toast.LENGTH_SHORT
                         ).show()
-                        // Réactiver le bouton
-                        binding.transfer.isEnabled = viewModel.transferData.value.isButtonEnabled
                     }
+
+                    else -> Unit
+
                 }
             }
         }
     }
 
-    private fun configListeners() {
+    /**
+     *    --- ui listeners ---
+     */
+
+
+    private fun setupListeners() {
         binding.recipient.addTextChangedListener {
             viewModel.onRecipientChange(it.toString())
         }
@@ -98,4 +107,21 @@ class TransferActivity : AppCompatActivity() {
             viewModel.transfer()
         }
     }
+
+    /**
+     *    --- ui functions ---
+     */
+
+    private fun updateUI(state: UiStateWrapper<Unit>) {
+
+        binding.loading.show(state is UiStateWrapper.Loading)
+        binding.transfer.isEnabled = state !is UiStateWrapper.Loading
+    }
+
+}
+
+// --- extensions ---
+
+private fun View.show(show: Boolean) {
+    this.visibility = if (show) View.VISIBLE else View.GONE
 }

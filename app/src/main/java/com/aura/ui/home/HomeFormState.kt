@@ -1,5 +1,5 @@
 package com.aura.ui.home
 
-data class HomeData(
+data class HomeFormState(
     val balanceFormatted: String
 )
