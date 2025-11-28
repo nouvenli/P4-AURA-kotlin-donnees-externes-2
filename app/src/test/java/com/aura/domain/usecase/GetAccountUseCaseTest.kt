@@ -40,12 +40,10 @@ class GetAccountUseCaseTest {
 
         //THEN
         assertEquals(2, result.size)
-        assertEquals("1", result[0].accountId)
-        assertEquals(true, result[0].isMainAccount)
-        assertEquals(100.0, result[0].balance,0.01)
-        assertEquals("2", result[1].accountId)
-        assertEquals(false, result[1].isMainAccount)
-        assertEquals(200.0, result[1].balance,0.01)
+        for (i in expectedAccounts.indices) {
+            assertEqualsUserAccount(expectedAccounts[i], result[i])
+        }
+
     }
 
     @Test
@@ -60,5 +58,13 @@ class GetAccountUseCaseTest {
         //THEN
         assertEquals(0, result.size)
     }
+
+    // --- Helpers ---
+    private fun assertEqualsUserAccount(expected: UserAccount, actual: UserAccount) {
+        assertEquals("wrong id", expected.accountId, actual.accountId)
+        assertEquals("wrong status main", expected.isMainAccount, actual.isMainAccount)
+        assertEquals("wrong balance", expected.balance, actual.balance, 0.01)
+    }
+
 
 }

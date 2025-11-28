@@ -1,6 +1,5 @@
 package com.aura.domain.usecase
 
-import com.aura.data.mapper.toDomain
 import com.aura.domain.model.UserAccount
 import com.aura.domain.repository.AuraRepository
 import javax.inject.Inject

@@ -9,7 +9,7 @@ import org.junit.Test
 class AccountMapperTest {
 
     @Test
-    fun `toDomain should convert AccountD to UserAccount`() {
+    fun `toDomain should convert AccountDto to UserAccount`() {
         //GIVEN - object AccountDto
         val accountDto = AccountDto(
             id = "123",
@@ -18,6 +18,7 @@ class AccountMapperTest {
         )
         //WHEN - Convert object AccountDto en UserAccount
         val userAccount = accountDto.toDomain()
+
         //THEN - Verify that the attributes are converted correctly.
         assertEquals("123", userAccount.accountId)
         assertEquals(true, userAccount.isMainAccount)
@@ -50,14 +51,16 @@ class AccountMapperTest {
 
         //THEN - Verify that the attributes are converted correctly.
         assertEquals(3, userAccountList.size)
-        assertEquals("1", userAccountList[0].accountId)
-        assertEquals(true, userAccountList[0].isMainAccount)
-        assertEquals(1001.0, userAccountList[0].balance, 0.01)
-        assertEquals("2", userAccountList[1].accountId)
-        assertEquals(false, userAccountList[1].isMainAccount)
-        assertEquals(2002.0, userAccountList[1].balance, 0.01)
-        assertEquals("3", userAccountList[2].accountId)
-        assertEquals(false, userAccountList[2].isMainAccount)
-        assertEquals(3003.10, userAccountList[2].balance, 0.01)
+        for (i in accountDtoList.indices) {
+            assertEqualsAccount(accountDtoList[i], userAccountList[i])
+        }
+    }
+
+    // --- Helpers ---
+
+    private fun assertEqualsAccount(expected: AccountDto, actual: UserAccount) {
+        assertEquals("wrong id", expected.id, actual.accountId)
+        assertEquals("wrong status main", expected.main, actual.isMainAccount)
+        assertEquals("wrong balance", expected.balance, actual.balance, 0.01)
     }
 }

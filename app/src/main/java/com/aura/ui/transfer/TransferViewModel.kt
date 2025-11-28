@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TransferViewModel @Inject constructor(
-    private val transferMoneyUseCase: TransferMoneyUseCase,  // ← Use Case au lieu du Repository
+    private val transferMoneyUseCase: TransferMoneyUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
