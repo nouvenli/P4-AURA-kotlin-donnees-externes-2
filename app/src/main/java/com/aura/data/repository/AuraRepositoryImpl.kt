@@ -10,7 +10,7 @@ import javax.inject.Inject
 
 class AuraRepositoryImpl @Inject constructor(
     private val apiService: AuraApiService
-) : AuraRepository {  // ← AJOUTER : implémente l'interface
+) : AuraRepository {
 
     override suspend fun login(id: String, password: String): Boolean {
         val credentials = CredentialsDto(id, password)
@@ -20,7 +20,7 @@ class AuraRepositoryImpl @Inject constructor(
 
     override suspend fun getAccount(userId: String): List<UserAccount> {
         val accountsDto = apiService.getAccount(userId)
-        return accountsDto.toDomain()  // ← Conversion DTO → Domain
+        return accountsDto.toDomain()
     }
 
     override suspend fun transfer(sender: String, recipient: String, amount: Double): Boolean {

@@ -56,7 +56,7 @@ class TransferActivity : AppCompatActivity() {
             }
         }
 
-        // Transfer state (loading, success, error)
+        // ui state (loading, success, error)
         lifecycleScope.launch {
             viewModel.transferState.collect { state ->
                 updateUI(state)
@@ -120,7 +120,10 @@ class TransferActivity : AppCompatActivity() {
 
 }
 
-// --- extensions ---
+/**
+ * --- helpers ---
+  */
+
 
 private fun View.show(show: Boolean) {
     this.visibility = if (show) View.VISIBLE else View.GONE
